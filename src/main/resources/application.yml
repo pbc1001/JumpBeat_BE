@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: JumpBeat
+  profiles:
+    default: local
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      base-path: /api/v1
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+springdoc:
+  swagger-ui:
+    path: /docs
+  api-docs:
+    path: /api-docs
+
+jumpbeat:
+  frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+  auth:
+    access-token-secret: ${JWT_ACCESS_SECRET:local-development-access-secret-change-me}
+    access-token-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}
+    refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:1209600000}
+    cookie-secure: ${AUTH_COOKIE_SECURE:false}
+
+logging:
+  level:
+    org.hibernate.SQL: WARN
