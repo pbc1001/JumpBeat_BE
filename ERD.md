@@ -44,6 +44,7 @@ erDiagram
       enum difficulty
       enum status
       int durationMs
+      long playCount
       datetime publishedAt
       datetime createdAt
       datetime updatedAt
@@ -137,6 +138,7 @@ refresh token은 갱신할 때마다 회전하며 기존 token은 즉시 폐기�
 | `difficulty` | ENUM | NOT NULL | `EASY`, `NORMAL`, `HARD` |
 | `status` | ENUM | INDEX, NOT NULL | `DRAFT`, `PUBLISHED`, `HIDDEN`, `UNAVAILABLE` |
 | `duration_ms` | INTEGER | NULL | 확인된 영상 길이 |
+| `play_count` | BIGINT | NOT NULL | 플레이 완료 횟수, 기본값 0 |
 | `published_at` | TIMESTAMPTZ | NULL | 공개 시각 |
 | `created_at` | TIMESTAMPTZ | NOT NULL | 생성 시각 |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | 수정 시각 |
