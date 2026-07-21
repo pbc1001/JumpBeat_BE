@@ -13,9 +13,9 @@
 | 인증 | Spring Security + JWT | API 인증과 로그인 유지 |
 | 비밀번호 | BCryptPasswordEncoder | Spring Security 기반 단방향 해시 |
 | 문서 | springdoc-openapi + Swagger UI | 실행 가능한 API 명세 |
-| 테스트 | JUnit + MockK + Testcontainers | 단위·통합 API 및 실제 PostgreSQL 테스트 |
+| 테스트 | JUnit + H2 | 단위·통합 API 테스트 |
 | 빌드 | Gradle Kotlin DSL | Kotlin 기반 빌드와 의존성 관리 |
-| 로컬 DB | Docker Compose | 동일한 개발 환경 제공 |
+| 로컬 DB | 파일형 H2 | 별도 설치 없이 유지되는 개발 DB |
 
 정확한 패키지 버전은 프로젝트 생성 시 호환되는 안정 버전을 고정한다.
 
@@ -39,7 +39,6 @@ Spring Initializr 의존성:
 - `io.jsonwebtoken:jjwt-api`, `jjwt-impl`, `jjwt-jackson`: JWT 생성·검증
 - `io.mockk:mockk`: Kotlin 친화적 mocking
 - `com.ninja-squad:springmockk`: Spring 테스트에서 MockK 사용
-- `org.testcontainers:postgresql`: 실제 PostgreSQL 통합 테스트
 
 Gradle plugin:
 
@@ -76,7 +75,7 @@ YouTube IFrame Player 재생에는 별도의 API 키가 필요하지 않다. You
 
 - Gradle Kotlin DSL 기반 Spring Boot 프로젝트 생성
 - 환경 변수 검증
-- PostgreSQL Docker Compose 작성
+- 로컬 H2와 운영 PostgreSQL 프로필 분리
 - Spring Data JPA 연결 및 Flyway 최초 마이그레이션
 - 전역 요청 검증, 오류 응답 형식, CORS, 보안 헤더 설정
 - springdoc-openapi Swagger UI `/docs` 구성
@@ -190,8 +189,8 @@ YouTube IFrame Player 재생에는 별도의 API 키가 필요하지 않다. You
 다음 작업에서는 0단계를 수행한다.
 
 1. `JumpBeat_BE`에 Gradle Kotlin DSL 기반 Spring Boot 프로젝트를 생성한다.
-2. PostgreSQL, Spring Data JPA, Flyway를 연결한다.
-3. `.env.example`과 Docker Compose를 작성한다.
+2. 로컬 H2와 운영 PostgreSQL·Flyway를 연결한다.
+3. `.env.example`과 실행 프로필을 작성한다.
 4. 공통 오류 형식과 요청 검증을 설정한다.
 5. Actuator health API와 springdoc Swagger UI를 구성한다.
 6. 빌드, 린트, 테스트로 초기 상태를 검증한다.

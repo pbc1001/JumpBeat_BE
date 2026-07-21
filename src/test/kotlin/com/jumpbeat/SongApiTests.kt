@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
@@ -129,10 +130,82 @@ class SongApiTests(
         }
     }
 
-    private fun signupAndGetAccessToken(): String {
+    @Test
+    fun `owner can edit published song and media change requires resync`() {
+        val token = signupAndGetAccessToken()
+        val draft = createDraft(token)
+        val songId = JsonPath.read<String>(draft, "$.data.id")
+        val lyricIds = JsonPath.read<List<String>>(draft, "$.data.lyrics[*].id")
+        syncAndPublish(token, songId, lyricIds)
+
+        mockMvc.patch("/api/v1/songs/$songId") {
+            header(HttpHeaders.AUTHORIZATION, "Bearer $token")
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"title":"수정된 제목","difficulty":"HARD"}"""
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.data.title") { value("수정된 제목") }
+            jsonPath("$.data.difficulty") { value("HARD") }
+            jsonPath("$.data.status") { value("PUBLISHED") }
+        }
+
+        mockMvc.patch("/api/v1/songs/$songId") {
+            header(HttpHeaders.AUTHORIZATION, "Bearer $token")
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "youtubeUrl":"https://youtu.be/9bZkp7q19f0",
+                  "lyricsText":"새 첫 줄\n새 두 번째 줄\n새 세 번째 줄"
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.data.youtubeVideoId") { value("9bZkp7q19f0") }
+            jsonPath("$.data.status") { value("DRAFT") }
+            jsonPath("$.data.durationMs") { doesNotExist() }
+            jsonPath("$.data.lyrics.length()") { value(3) }
+            jsonPath("$.data.lyrics[0].startTimeMs") { doesNotExist() }
+        }
+
+        mockMvc.get("/api/v1/songs/$songId")
+            .andExpect { status { isNotFound() } }
+    }
+
+    @Test
+    fun `only owner can edit and delete song`() {
+        val ownerToken = signupAndGetAccessToken()
+        val draft = createDraft(ownerToken)
+        val songId = JsonPath.read<String>(draft, "$.data.id")
+        val otherToken = signupAndGetAccessToken(
+            email = "other@example.com",
+            nickname = "다른사용자",
+        )
+
+        mockMvc.patch("/api/v1/songs/$songId") {
+            header(HttpHeaders.AUTHORIZATION, "Bearer $otherToken")
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"title":"권한 없는 수정"}"""
+        }.andExpect {
+            status { isForbidden() }
+            jsonPath("$.error.code") { value("FORBIDDEN_SONG_ACCESS") }
+        }
+
+        mockMvc.delete("/api/v1/songs/$songId") {
+            header(HttpHeaders.AUTHORIZATION, "Bearer $ownerToken")
+        }.andExpect { status { isNoContent() } }
+
+        mockMvc.get("/api/v1/songs/drafts/$songId") {
+            header(HttpHeaders.AUTHORIZATION, "Bearer $ownerToken")
+        }.andExpect { status { isNotFound() } }
+    }
+
+    private fun signupAndGetAccessToken(
+        email: String = "song@example.com",
+        nickname: String = "곡등록자",
+    ): String {
         val result = mockMvc.post("/api/v1/auth/signup") {
             contentType = MediaType.APPLICATION_JSON
-            content = """{"email":"song@example.com","nickname":"곡등록자","password":"password123!"}"""
+            content = """{"email":"$email","nickname":"$nickname","password":"password123!"}"""
         }.andExpect { status { isCreated() } }.andReturn()
         return JsonPath.read(result.response.contentAsString, "$.data.accessToken")
     }

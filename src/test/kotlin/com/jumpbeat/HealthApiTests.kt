@@ -22,4 +22,12 @@ class HealthApiTests(
                 jsonPath("$.status") { value("UP") }
             }
     }
+
+    @Test
+    fun `Swagger UI is publicly accessible`() {
+        mockMvc.get("/swagger-ui/index.html")
+            .andExpect {
+                status { isOk() }
+            }
+    }
 }
