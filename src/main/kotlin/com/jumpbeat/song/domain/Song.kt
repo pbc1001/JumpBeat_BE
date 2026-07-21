@@ -80,6 +80,25 @@ class Song(
         lyrics += LyricLine(song = this, text = text, lineOrder = lineOrder)
     }
 
+    fun replaceLyrics(lines: List<String>) {
+        lyrics.clear()
+        lines.forEachIndexed { index, text -> addLyric(text, index) }
+        resetSync()
+    }
+
+    fun resetSync() {
+        durationMs = null
+        lyrics.forEach { it.startTimeMs = null }
+        status = SongStatus.DRAFT
+        publishedAt = null
+        updatedAt = Instant.now()
+    }
+
+    fun softDelete(now: Instant) {
+        deletedAt = now
+        updatedAt = now
+    }
+
     fun publish(now: Instant) {
         status = SongStatus.PUBLISHED
         publishedAt = now

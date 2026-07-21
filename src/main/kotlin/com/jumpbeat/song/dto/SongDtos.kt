@@ -36,6 +36,25 @@ data class CreateSongDraftRequest(
     val confirmedDuplicate: Boolean = false,
 )
 
+data class UpdateSongRequest(
+    @field:Size(min = 1, max = 150, message = "노래 제목은 1자 이상 150자 이하여야 합니다.")
+    val title: String? = null,
+
+    @field:Size(min = 1, max = 100, message = "가수명은 1자 이상 100자 이하여야 합니다.")
+    val artist: String? = null,
+
+    @field:Size(min = 1, max = 500, message = "YouTube URL이 너무 깁니다.")
+    val youtubeUrl: String? = null,
+
+    val language: SongLanguage? = null,
+    val difficulty: SongDifficulty? = null,
+
+    @field:Size(min = 1, max = 100000, message = "가사는 1자 이상이어야 합니다.")
+    val lyricsText: String? = null,
+
+    val confirmedDuplicate: Boolean = false,
+)
+
 data class SaveSongSyncRequest(
     @field:Min(value = 1, message = "영상 길이는 1ms 이상이어야 합니다.")
     val durationMs: Int,

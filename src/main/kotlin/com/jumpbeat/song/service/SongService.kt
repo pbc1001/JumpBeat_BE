@@ -16,6 +16,7 @@ import com.jumpbeat.song.dto.SongDetailResponse
 import com.jumpbeat.song.dto.SongListResponse
 import com.jumpbeat.song.dto.SongQuery
 import com.jumpbeat.song.dto.SongSummaryResponse
+import com.jumpbeat.song.dto.UpdateSongRequest
 import com.jumpbeat.song.util.YouTubeUrlParser
 import com.jumpbeat.user.domain.UserRepository
 import org.springframework.data.domain.PageRequest
@@ -154,10 +155,64 @@ class SongService(
         return song.toDetailResponse()
     }
 
+    @Transactional
+    fun updateSong(userId: UUID, songId: UUID, request: UpdateSongRequest): SongDetailResponse {
+        val song = ownedSong(userId, songId)
+        if (request.title == null && request.artist == null && request.youtubeUrl == null &&
+            request.language == null && request.difficulty == null && request.lyricsText == null
+        ) {
+            throw BusinessException(ErrorCode.VALIDATION_FAILED)
+        }
+
+        request.title?.trim()?.let { newTitle ->
+            if (newTitle.isEmpty()) throw BusinessException(ErrorCode.VALIDATION_FAILED)
+            val duplicates = duplicateSongs(newTitle).filter { it.id != song.id }
+            if (duplicates.isNotEmpty() && !request.confirmedDuplicate) {
+                throw BusinessException(
+                    ErrorCode.DUPLICATE_CONFIRMATION_REQUIRED,
+                    DuplicateSongsResponse(true, duplicates.map { it.toDuplicateResponse() }),
+                )
+            }
+            song.title = newTitle
+            song.normalizedTitle = normalizeText(newTitle)
+        }
+        request.artist?.trim()?.let { newArtist ->
+            if (newArtist.isEmpty()) throw BusinessException(ErrorCode.VALIDATION_FAILED)
+            song.artist = newArtist
+            song.normalizedArtist = normalizeText(newArtist)
+        }
+        request.language?.let { song.language = it }
+        request.difficulty?.let { song.difficulty = it }
+
+        request.youtubeUrl?.let { newUrl ->
+            val newVideoId = youTubeUrlParser.parseVideoId(newUrl)
+            if (newVideoId != song.youtubeVideoId) {
+                song.youtubeVideoId = newVideoId
+                song.resetSync()
+            }
+        }
+        request.lyricsText?.let { lyricsText ->
+            song.replaceLyrics(parseLyricLines(lyricsText))
+        }
+        song.updatedAt = Instant.now()
+        return songRepository.saveAndFlush(song).toDetailResponse()
+    }
+
+    @Transactional
+    fun deleteSong(userId: UUID, songId: UUID) {
+        ownedSong(userId, songId).softDelete(Instant.now())
+    }
+
     private fun ownedDraft(userId: UUID, songId: UUID): Song {
-        val song = songRepository.findByIdAndCreatorIdAndDeletedAtIsNull(songId, userId)
-            ?: throw BusinessException(ErrorCode.SONG_NOT_FOUND)
+        val song = ownedSong(userId, songId)
         if (song.status != SongStatus.DRAFT) throw BusinessException(ErrorCode.INVALID_SONG_STATUS)
+        return song
+    }
+
+    private fun ownedSong(userId: UUID, songId: UUID): Song {
+        val song = songRepository.findById(songId).orElseThrow { BusinessException(ErrorCode.SONG_NOT_FOUND) }
+        if (song.deletedAt != null) throw BusinessException(ErrorCode.SONG_NOT_FOUND)
+        if (song.creator.id != userId) throw BusinessException(ErrorCode.FORBIDDEN_SONG_ACCESS)
         return song
     }
 
@@ -166,6 +221,17 @@ class SongService(
             SongStatus.PUBLISHED,
             normalizeText(title),
         )
+
+    private fun parseLyricLines(lyricsText: String): List<String> {
+        val lines = lyricsText.lineSequence()
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+            .toList()
+        if (lines.isEmpty() || lines.size > MAX_LYRIC_LINES || lines.any { it.length > 500 }) {
+            throw BusinessException(ErrorCode.VALIDATION_FAILED)
+        }
+        return lines
+    }
 
     private fun publicSongSpecification(query: SongQuery): Specification<Song> =
         Specification { root, _, criteriaBuilder ->
