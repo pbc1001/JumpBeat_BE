@@ -6,6 +6,7 @@
 erDiagram
     USER ||--o{ SONG : creates
     USER ||--o{ GAME_RESULT : plays
+    USER ||--o{ REFRESH_TOKEN : owns
     SONG ||--|{ LYRIC_LINE : contains
     SONG ||--o{ GAME_RESULT : has
     GAME_RESULT ||--|{ LINE_JUDGEMENT : contains
@@ -20,6 +21,15 @@ erDiagram
       enum role
       datetime createdAt
       datetime updatedAt
+    }
+
+    REFRESH_TOKEN {
+      uuid id PK
+      uuid userId FK
+      string tokenHash UK
+      datetime expiresAt
+      datetime revokedAt
+      datetime createdAt
     }
 
     SONG {
@@ -98,6 +108,19 @@ erDiagram
 | `role` | ENUM | NOT NULL | `USER`, `ADMIN` |
 | `created_at` | TIMESTAMPTZ | NOT NULL | 생성 시각 |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | 수정 시각 |
+
+### `refresh_tokens`
+
+| 필드 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| `id` | UUID | PK | refresh token ID |
+| `user_id` | UUID | FK, NOT NULL | 소유 사용자 |
+| `token_hash` | VARCHAR(64) | UNIQUE, NOT NULL | 원문 대신 저장하는 SHA-256 해시 |
+| `expires_at` | TIMESTAMPTZ | NOT NULL | 만료 시각 |
+| `revoked_at` | TIMESTAMPTZ | NULL | 사용·로그아웃으로 폐기된 시각 |
+| `created_at` | TIMESTAMPTZ | NOT NULL | 생성 시각 |
+
+refresh token은 갱신할 때마다 회전하며 기존 token은 즉시 폐기한다.
 
 ### `songs`
 

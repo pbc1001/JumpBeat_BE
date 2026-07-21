@@ -6,9 +6,14 @@ spring:
     password:
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: create-drop
   flyway:
     enabled: false
 
 jumpbeat:
   frontend-origin: http://localhost:5173
+  auth:
+    access-token-secret: test-access-token-secret-with-at-least-32-bytes
+    access-token-expiration-ms: 900000
+    refresh-token-expiration-ms: 1209600000
+    cookie-secure: false

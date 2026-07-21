@@ -86,7 +86,17 @@
 
 ### `POST /auth/refresh`
 
-HttpOnly refresh cookie를 검증해 새 access token을 발급한다.
+HttpOnly refresh cookie를 검증해 새 access token을 발급한다. 사용한 refresh token은 즉시 폐기하고 새 refresh token으로 교체한다. 서버 DB에는 refresh token 원문이 아닌 SHA-256 해시만 저장한다.
+
+응답 `200`:
+
+```json
+{
+  "data": {
+    "accessToken": "jwt"
+  }
+}
+```
 
 ### `POST /auth/logout`
 

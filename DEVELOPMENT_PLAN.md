@@ -62,8 +62,8 @@ DB_PASSWORD=replace-with-local-password
 FRONTEND_ORIGIN=http://localhost:5173
 JWT_ACCESS_SECRET=replace-with-long-random-secret-at-least-32-bytes
 JWT_ACCESS_EXPIRATION_MS=900000
-JWT_REFRESH_SECRET=replace-with-another-long-random-secret-at-least-32-bytes
 JWT_REFRESH_EXPIRATION_MS=1209600000
+AUTH_COOKIE_SECURE=false
 ```
 
 실제 비밀값은 `.env`에 저장하고 Git에는 올리지 않는다. 저장소에는 키 이름만 포함한 `.env.example`을 둔다.
