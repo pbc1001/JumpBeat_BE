@@ -43,7 +43,14 @@ class SecurityConfig(
                 }
             }
             .authorizeHttpRequests {
-                it.requestMatchers("/docs", "/docs/**", "/api-docs", "/api-docs/**").permitAll()
+                it.requestMatchers(
+                    "/docs",
+                    "/docs/**",
+                    "/swagger-ui.html",
+                    "/swagger-ui/**",
+                    "/api-docs",
+                    "/api-docs/**",
+                ).permitAll()
                 it.requestMatchers("/api/v1/health", "/error").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/api/v1/songs", "/api/v1/songs/duplicates").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/api/v1/songs/{songId}").permitAll()
