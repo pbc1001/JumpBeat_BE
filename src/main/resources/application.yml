@@ -39,6 +39,11 @@ springdoc:
 
 jumpbeat:
   frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+  auth:
+    access-token-secret: ${JWT_ACCESS_SECRET:local-development-access-secret-change-me}
+    access-token-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}
+    refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:1209600000}
+    cookie-secure: ${AUTH_COOKIE_SECURE:false}
 
 logging:
   level:
