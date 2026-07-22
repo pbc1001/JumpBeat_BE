@@ -191,6 +191,13 @@ class SongApiTests(
         }
 
         mockMvc.delete("/api/v1/songs/$songId") {
+            header(HttpHeaders.AUTHORIZATION, "Bearer $otherToken")
+        }.andExpect {
+            status { isForbidden() }
+            jsonPath("$.error.code") { value("FORBIDDEN_SONG_ACCESS") }
+        }
+
+        mockMvc.delete("/api/v1/songs/$songId") {
             header(HttpHeaders.AUTHORIZATION, "Bearer $ownerToken")
         }.andExpect { status { isNoContent() } }
 
