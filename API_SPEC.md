@@ -299,25 +299,17 @@ refresh token을 무효화하고 cookie를 제거한다.
 
 ### `POST /game-results`
 
-로그인이 필요하다. 프론트는 줄별 판정 기록을 보내고 서버는 현재 곡 가사를 기준으로 점수와 통계를 다시 계산한다.
+로그인이 필요하다. 서버는 전달받은 판정 개수로 점수와 정확도를 계산해 기록한다.
 
 ```json
 {
   "songId": "uuid",
   "mode": "CONTINUE",
-  "playTimeMs": 172300,
-  "judgements": [
-    {
-      "lyricLineId": "uuid-1",
-      "judgement": "CORRECT",
-      "submittedAtMs": 14820
-    },
-    {
-      "lyricLineId": "uuid-2",
-      "judgement": "TIMEOUT",
-      "submittedAtMs": null
-    }
-  ]
+  "correctCount": 10,
+  "wrongCount": 2,
+  "missCount": 3,
+  "totalCount": 15,
+  "playTimeMs": 172300
 }
 ```
 
@@ -327,18 +319,30 @@ refresh token을 무효화하고 cookie를 제거한다.
 {
   "data": {
     "id": "uuid",
-    "score": 100,
-    "accuracy": 50.0,
-    "correctCount": 1,
-    "missCount": 1,
-    "maxCombo": 1,
-    "completionRate": 100.0,
-    "playedAt": "2026-07-21T00:00:00.000Z"
+    "score": 1000,
+    "accuracy": 66.67
   }
 }
 ```
 
-서버는 명백히 불가능한 시간, 중복 가사 판정, 잘못된 순서를 검증한다.
+`mode`는 `CONTINUE`, `SURVIVAL` 중 하나다. 서버는 처리 개수가 전체 입력 대상 수보다 큰 요청을 거부한다.
+
+### `GET /songs/:songId/ranking`
+
+곡별 상위 3명의 닉네임만 반환한다. 한 사용자의 기록이 여러 개라면 가장 좋은 기록 하나만 순위에 사용한다. 점수 내림차순, 정확도 내림차순, 플레이 시간 오름차순으로 정렬한다.
+
+```json
+{
+  "data": {
+    "songId": "uuid",
+    "rankings": [
+      { "rank": 1, "nickname": "타자왕" },
+      { "rank": 2, "nickname": "비트마스터" },
+      { "rank": 3, "nickname": "연습생" }
+    ]
+  }
+}
+```
 
 ### `GET /users/me/game-results`
 
